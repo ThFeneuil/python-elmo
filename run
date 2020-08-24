@@ -1,0 +1,24 @@
+elmo_repository="elmo"
+elmo_source="https://github.com/sca-research/ELMO.git"
+
+echo "====== ELMO Online ======"
+if [ -d ${elmo_repository} ]; then
+    echo " - ELMO tool already installed."
+else
+    # Download the tool
+    git clone --depth=1 --branch=master ${elmo_source} ${elmo_repository}
+    rm -rf ./${elmo_repository}/.git
+    
+    # Compile the tool
+    cd ./${elmo_repository}
+    make
+    cd ..
+fi
+
+#current_directory=${PWD##*/}
+#echo " - Current directory: ${current_directory}"
+echo 
+
+#cd ..
+#python3 -m ${current_directory}.run_server
+python3 run_server.py
