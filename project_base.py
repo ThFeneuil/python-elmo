@@ -1,6 +1,6 @@
 import os, re
 import socket
-from protocol import SocketTool
+from .protocol import SocketTool
 import numpy as np
 
 def to_hex(v, nb_bits=16):
@@ -14,7 +14,10 @@ def split_octet(hexstr):
     return [hexstr[i:i+2] for i in range(0, len(hexstr), 2)]
 
 def to_signed_hex(v, nb_bits=16):
-    return split_octet(to_hex(v & (2**nb_bits-1), nb_bits=nb_bits))
+    try:
+        return split_octet(to_hex(v & (2**nb_bits-1), nb_bits=nb_bits))
+    except TypeError as err:
+        raise TypeError('Error to transform a <{}> into signed hex.'.format(type(v))) from err
 
 def write(_input, uintXX, nb_bits=16):
     uintXX = to_signed_hex(uintXX, nb_bits=nb_bits)
@@ -31,15 +34,15 @@ def launch_simulation(quiet=False, **kwargs):
         s.connect(('localhost', 5000))
         SocketTool.send_data(s, kwargs)
         if not SocketTool.get_ack(s):
-            raise RuntimeError("The request has been refused !")
+            raise RuntimeError("NACK received: The request has been refused !")
         else:
             data = SocketTool.get_data(s)
             if data['error'] and not quiet:
-                raise Exception("The simulation return an error")
+                raise Exception("The simulation return an error.")
             return data['output'], data['error']
         s.close()
-    except IOError:
-        raise RuntimeError("The connection refused. Has the ELMO server been switch on ?")
+    except IOError as err:
+        raise RuntimeError("The connection refused. Has the ELMO server been switch on ?") from err
 
 
 class SimulationProject:
@@ -117,12 +120,23 @@ class SimulationProject:
     def run(self):
         with open('{}/input.txt'.format(self.elmo_folder), 'w') as _input:
             self.set_input(_input)
+        from .manage import execute_simulation
+        execute_simulation(self)
+        self.is_executed = True
+        
+    def run_online(self):
+        with open('{}/input.txt'.format(self.elmo_folder), 'w') as _input:
+            self.set_input(_input)
         launch_simulation(project=self.get_project_label(), quiet=False)
         self.is_executed = True
         
     def get_asmtrace_filename(self):
         return '{}/output/asmoutput/asmtrace00001.txt'.format(self.elmo_folder)
-        
+    
+    def get_asmtrace(self):
+        with open(self.get_asmtrace_filename(), 'r') as _file:
+            return [line.strip() for line in _file.readlines()]
+    
     def get_indexes_of(self, condition):
         with open(self.get_asmtrace_filename(), 'r') as _file:
             asmtrace = _file.readlines()

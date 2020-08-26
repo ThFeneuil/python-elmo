@@ -82,7 +82,6 @@ OBJDUMP		:= $(PREFIX)-objdump
 # Source files
 
 LDSCRIPT	= $(BINARY).ld
-#OBJS		+= $(BINARY).o
 ELMOASMFUNCTIONS = elmoasmfunctions.o
 
 #!!! PLEASE ADD YOUR SOURCES, HEADERS AND OBJECTS HERE !!!
@@ -137,8 +136,8 @@ $(BINARY).bin: $(BINARY).elf
 $(BINARY).list: $(BINARY).elf
 	$(Q)$(OBJDUMP) -S $(BINARY).elf > $(BINARY).list
 
-$(BINARY).elf $(BINARY).map: $(OBJS) $(LDSCRIPT)
-	$(Q)$(LD) $(LDFLAGS) vector.o $(ARCH_FLAGS) $(OBJS) $(ELMOASMFUNCTIONS) $(LDLIBS) -o $(BINARY).elf
+$(BINARY).elf $(BINARY).map: $(OBJECTS) $(LDSCRIPT)
+	$(Q)$(LD) $(LDFLAGS) vector.o $(ARCH_FLAGS) $(OBJECTS) $(ELMOASMFUNCTIONS) $(LDLIBS) -o $(BINARY).elf
 
 %.o: %.c $(HEADER)
 		$(Q)$(CC) $(CFLAGS) $(CPPFLAGS) $(ARCH_FLAGS) -c -o $@ $<

@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from enum import IntEnum, unique
 
 def hweight(n):
     c = 0
@@ -23,7 +24,16 @@ def binary_writing(n, nb_bits=32, with_hamming=False):
         ind += 1
     
     return (w, h) if with_hamming else w
-    
+
+@unique
+class Instr(IntEnum):
+    EOR = 0
+    LSL = 1
+    STR = 2
+    LDR = 3
+    MUL = 4
+    OTHER = 5
+
 PREVIOUS = 0
 CURRENT = 1
 SUBSEQUENT = 2

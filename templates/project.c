@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "elmoasmfunctionsdef.h"
 #include "elmoasmfunctionsdef-extension.h"
 
 // ELMO API :

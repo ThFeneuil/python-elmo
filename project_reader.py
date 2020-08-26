@@ -28,7 +28,7 @@ class ProjectReader:
                         exec(project, globals, locals)
                     
                     # Extract the simulations
-                    for key, obj in locals.item():
+                    for key, obj in locals.items():
                         if inspect.isclass(obj) and issubclass(obj, SimulationProject):
                             if key in projects:
                                 print('Warning! Multiplie simulation with the same name. Simulation ignored: {} in {}'.format(key, complete_filename[len(PROJECTS_REPOSITORY)+1:]))
