@@ -1,3 +1,12 @@
+### In this file is defined a Python class to manipulate the simualtion project.
+###  - This class must be inherited from th class 'SimulationProject' (no need to import it)
+###  - You can use here the function "write(input_file, uint, nb_bits=16)"
+###            to write an integer of 'nb_bits' bits in the 'input_file' (no need to import it too).
+### To get this simulation class in Python scripts, please use the functions in manage.py as
+###  - search_simulations(repository)
+###  - get_simulation(repository, classname=None)
+###  - get_simulation_via_classname(classname)
+
 class KyberNTTSimulation(SimulationProject):
     @classmethod
     def get_binary(cl):

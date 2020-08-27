@@ -1,6 +1,8 @@
 import os, shutil
 import re
 
+from .manage import create_simulation
+
 print('Creation of a new simulation project...')
 
 ### Create the repository of the projects
@@ -25,43 +27,15 @@ while not project_repository:
     if search(repository):
         print('Illegal characters detected! Please enter a name with only the following characters : a-z, A-Z, 0-9, ".", "-", "_" and "/".')
     else:
-        try:
-            os.makedirs(global_path+'/'+repository, exist_ok=False)
-            project_repository = repository
-        except FileExistsError:
-            print('Error, a project with this repository already exists!')
+        project_repository = repository
 project_path = global_path+'/'+repository
 
-### Add contents in the project
-files_from_ELMO = [
-    'Examples/elmoasmfunctions.o',
-    'Examples/elmoasmfunctions.s',
-    'Examples/elmoasmfunctionsdef.h',
-    'Examples/DPATraces/MBedAES/vector.o',
-]
-files_from_templates = [
-    'elmoasmfunctionsdef-extension.h',
-    'Makefile',
-    'project.c'
-]
-
-for filename in files_from_ELMO:
-    shutil.copy('elmo/'+filename, project_path)
-for filename in files_from_templates:
-    shutil.copy('templates/'+filename, project_path)
-shutil.copy('elmo/'+'Examples/DPATraces/MBedAES/MBedAES.ld', project_path+'/'+'project.ld')
-
-### Create the project class
-with open('templates/projectclass.py') as _source:
-    code = ''.join(_source.readlines())
-    code = code.replace('{{PROJECTCLASSNAME}}', project_classname)
-    with open(project_path+'/'+'projectclass.py', 'w') as _dest:
-        _dest.write(code)
+project_path = create_simulation(project_path, classname)
 
 print('')
 print('Creation complete !')
-print(' - Project repository: {}'.format(os.path.abspath(project_path)))
-print(' - Project class "{}" in {}'.format(project_classname, os.path.abspath(project_path+'/'+'projectclass.py')))
-print(' - Linker script: {}'.format(os.path.abspath(project_path+'/'+'project.ld')))
+print(' - Project repository: {}'.format(project_path))
+print(' - Project class "{}" in {}'.format(project_classname, project_path+'/projectclass.py'))
+print(' - Linker script: {}'.format(project_path+'/project.ld')))
 print('')
 print('Please don\'t to compile the project with the present Makefile before using it!')

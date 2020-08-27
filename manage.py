@@ -3,7 +3,7 @@ import re
 import inspect
 import subprocess
 
-def search_simulations(repository, criteria=lambda x:True, search_also_in_module=True):
+def search_simulations_in_repository(repository, criteria=lambda x:True):
     """ To search simulation classes in the 'repository' verifying the 'criteria' """
     projects = {}
     
@@ -35,15 +35,23 @@ def search_simulations(repository, criteria=lambda x:True, search_also_in_module
                                 obj.set_project_directory(os.path.abspath(root))
                                 projects[key] = obj
     
-    if search_also_in_module:
-        module_path = os.path.dirname(os.path.abspath(__file__))
-        module_projects = search_simulations(module_path+'/projects', criteria=lambda x:True, search_also_in_module=False)
-        for key, project in module_projects.items():
-            if key not in projects:
-                projects[key] = project
-    
     return projects
-    
+
+def search_simulations_in_module(criteria=lambda x:True):
+    module_path = os.path.dirname(os.path.abspath(__file__))
+    projects_path = module_path+'/projects'
+    return search_simulations_in_repository(projects_path, criteria)
+
+def search_simulations(repository, criteria=lambda x:True):
+    projects = search_simulations_in_repository(repositories, criteria)
+
+    module_projects = search_simulations_in_module
+    for key, project in module_projects.items():
+        if key not in projects:
+            projects[key] = project
+
+    return projects
+
 class SimulationNotFoundError(Exception):
     pass
     
@@ -67,7 +75,7 @@ def get_simulation(repository, classname=None):
 def get_simulation_via_classname(classname):
     return get_simulation('.', classname)
         
-def create_simulation(repository, classname, verbose=True):
+def create_simulation(repository, classname):
     """ Create a simulation class """
     try:
         os.makedirs(repository, exist_ok=False)
@@ -104,6 +112,8 @@ def create_simulation(repository, classname, verbose=True):
         code = code.replace('{{PROJECTCLASSNAME}}', classname)
         with open(project_path+'/'+'projectclass.py', 'w') as _dest:
             _dest.write(code)
+            
+    return os.path.abspath(project_path)
 
 def execute_simulation(project, data=None):
     """ Execute a simulation with 'data' """

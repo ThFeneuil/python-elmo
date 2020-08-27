@@ -1,5 +1,5 @@
-from listeningthread import ListeningThread
-from executorthread import ExecutorThread
+from .servicethread import ListeningThread
+from .executorthread import ExecutorThread
 
 def do_main_program(projects):
     global thread, stop
@@ -15,10 +15,9 @@ thread = None
 stop = False
 
 # Information
-from project_reader import ProjectReader
-reader = ProjectReader()
-projects = {sc.get_project_label(): sc for sc in reader.get_project_classes()}
-print('Available projects: %s' % list(projects.keys()))
+from .manage import search_simulations
+projects = {sc.get_project_label(): sc for sc in search_simulations_in_module().values()}
+print('Available module projects: %s' % list(projects.keys()))
 print('')
 
 # Execute
