@@ -28,22 +28,6 @@ def write_list(_input, uint16_list):
     for uint16 in uint16_list:
         write(_input, uint16)
 
-def launch_simulation(quiet=False, **kwargs):
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(('localhost', 5000))
-        SocketTool.send_data(s, kwargs)
-        if not SocketTool.get_ack(s):
-            raise RuntimeError("NACK received: The request has been refused !")
-        else:
-            data = SocketTool.get_data(s)
-            if data['error'] and not quiet:
-                raise Exception("The simulation return an error.")
-            return data['output'], data['error']
-        s.close()
-    except IOError as err:
-        raise RuntimeError("The connection refused. Has the ELMO server been switch on ?") from err
-
 
 class SimulationProject:
     _nb_bits_for_nb_challenges = 16
@@ -89,7 +73,15 @@ class SimulationProject:
     def __init__(self, challenges=None):
         self.elmo_folder = os.path.dirname(os.path.abspath(__file__))+'/elmo'
         self.challenges = challenges
+        self.reset()
+        
+    def reset(self):
         self.is_executed = False
+        self.has_been_online = False
+
+        self._complete_asmtrace = None
+        self._complete_results = None
+        self._complete_printed_data = None
     
     def set_challenges(self, challenges):
         self.challenges = challenges
@@ -118,30 +110,66 @@ class SimulationProject:
             self.set_input_for_each_challenge(input, challenge)
             
     def run(self):
+        self.reset()
         with open('{}/input.txt'.format(self.elmo_folder), 'w') as _input:
             self.set_input(_input)
         from .manage import execute_simulation
-        execute_simulation(self)
+        res = execute_simulation(self)
         self.is_executed = True
+        self.has_been_online = False
+        return res
         
-    def run_online(self):
-        with open('{}/input.txt'.format(self.elmo_folder), 'w') as _input:
-            self.set_input(_input)
-        launch_simulation(project=self.get_project_label(), quiet=False)
+    def run_online(self, host='localhost', port=5000):
+        class TempInput:
+            def __init__(self):
+                self._buffer = ''
+            def write(self, data):
+                self._buffer += data
+            def get_string(self):
+                return self._buffer
+        
+        self.reset()
+        input = TempInput()
+        self.set_input(input)
+        
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((host, port))
+            SocketTool.send_data(s, {
+                'input': input.get_string(),
+            })
+            if not SocketTool.get_ack(s):
+                raise RuntimeError("NACK received: The request has been refused !")
+            else:
+                SocketTool.send_file(s, '{}/{}'.format(self.get_project_directory(), self.get_binary()))
+                data = SocketTool.get_data(s)
+                if data['error']:
+                    raise Exception("The simulation returned an error: {}".format(data['error']))
+            s.close()
+        except IOError as err:
+            raise RuntimeError("The connection refused. Has the ELMO server been switch on ?") from err
+            
         self.is_executed = True
+        self.has_been_online = True
+        self._complete_asmtrace = data['asmtrace']
+        self._complete_results = data['results']
+        self._complete_printed_data = data['printed_data']
         
+    ### Manipulate the ASM trace
     def get_asmtrace_filename(self):
         return '{}/output/asmoutput/asmtrace00001.txt'.format(self.elmo_folder)
     
     def get_asmtrace(self):
-        with open(self.get_asmtrace_filename(), 'r') as _file:
-            return [line.strip() for line in _file.readlines()]
+        if self._complete_asmtrace is None:
+            with open(self.get_asmtrace_filename(), 'r') as _file:
+                self._complete_asmtrace = ''.join(_file.readlines())
+        
+        return self._complete_asmtrace.split('\n')        
     
     def get_indexes_of(self, condition):
-        with open(self.get_asmtrace_filename(), 'r') as _file:
-            asmtrace = _file.readlines()
-            return [i for i, instr in enumerate(asmtrace) if condition(instr)]
-    
+        return [i for i, instr in enumerate(self.get_asmtrace()) if condition(instr)]
+
+    ### Manipulate the results
     def get_number_of_traces(self):
         return len(self.challenges)
     
@@ -149,31 +177,37 @@ class SimulationProject:
         assert self.is_executed
         nb_traces = self.get_number_of_traces()
 
-        trace_filenames = []
-        for filename in os.listdir('{}/output/traces/'.format(self.elmo_folder)):
-            if re.search(r'^trace\d+\.trc$', filename):
-                trace_filenames.append('{}/output/traces/{}'.format(self.elmo_folder, filename))
-                if len(trace_filenames) >= nb_traces:
-                    break
-        
-        assert len(trace_filenames) == nb_traces
-        results = trace_filenames
-        
-        if not only_filenames:
-            for i in range(len(results)):
-                with open(results[i], 'r') as _file:
-                    if indexes is not None:
-                        results[i] = list(map(float,  _file.readlines()[indexes]))
-                    else:
-                        results[i] = list(map(float,  _file.readlines()))
+        if only_filenames and self.has_been_online:
+            raise Exception('Impossible to get the filenames for an online execution')
+
+        if only_filenames or self._complete_results is None:
+            trace_filenames = []
+            for filename in os.listdir('{}/output/traces/'.format(self.elmo_folder)):
+                if re.search(r'^trace\d+\.trc$', filename):
+                    trace_filenames.append('{}/output/traces/{}'.format(self.elmo_folder, filename))
+                    if len(trace_filenames) >= nb_traces:
+                        break
+            
+            assert len(trace_filenames) == nb_traces
+            if only_filenames:
+                return reorganise(trace_filenames) if reorganise is not None else trace_filenames
+
+            self._complete_results = []
+            for filename in trace_filenames:
+                with open(filename, 'r') as _file:
+                    self._complete_results.append(list(map(float,  _file.readlines())))
+
+        results = self._complete_results
+        if indexes is not None:
+            for i in range(len(self._complete_results)):
+                results[i] = results[i][indexes]
 
         if reorganise is not None:
             results = reorganise(results)
-
         return results
     
     def get_traces(self, reorganise=None, indexes=None):
-        results = self.get_results(only_filenames=False, reorganise=reorganise,indexes=indexes)
+        results = self.get_results(only_filenames=False, reorganise=reorganise, indexes=indexes)
 
         nb_traces = self.get_number_of_traces()
         trace_length = len(results[0])
@@ -181,21 +215,25 @@ class SimulationProject:
         traces = np.zeros((nb_traces, trace_length))
         for i in range(nb_traces):
             traces[i,:] = results[i]
-            
+        
         if reorganise is not None:
             traces = reorganise(traces)
-            
+        
         return traces
 
+    ### Manipulate the Printed Data
     def get_printed_data(self):
-        with open('{}/output/printdata.txt'.format(self.elmo_folder), 'r') as _file:
-            data = list(map(lambda x: int(x, 16), _file.readlines()))
+        if self._complete_printed_data is None:
+            with open('{}/output/printdata.txt'.format(self.elmo_folder), 'r') as _file:
+                self._complete_printed_data = list(map(lambda x: int(x, 16), _file.readlines()))
         
+        data = self._complete_printed_data
         nb_traces = self.get_number_of_traces()
         nb_data_per_trace = len(data) // nb_traces
         
         return [data[nb_data_per_trace*i:nb_data_per_trace*(i+1)] for i in range(nb_traces)]        
         
+    ### Other
     def analyse_operands(self, num_line, num_trace=1):
         num_str = str(num_trace)
         num_str = '0'*(5-len(num_str)) + num_str

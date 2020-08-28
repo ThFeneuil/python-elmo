@@ -43,9 +43,9 @@ def search_simulations_in_module(criteria=lambda x:True):
     return search_simulations_in_repository(projects_path, criteria)
 
 def search_simulations(repository, criteria=lambda x:True):
-    projects = search_simulations_in_repository(repositories, criteria)
+    projects = search_simulations_in_repository(repository, criteria)
 
-    module_projects = search_simulations_in_module
+    module_projects = search_simulations_in_module(criteria)
     for key, project in module_projects.items():
         if key not in projects:
             projects[key] = project
@@ -142,17 +142,22 @@ def execute_simulation(project, data=None):
         }
     
     # Generate the trace by launching ELMO
-    command = './elmo {}/{}'.format(
+    command = './elmo "{}/{}"'.format(
         project.get_project_directory(),
         project.get_binary()
     )
     cwd = os.path.dirname(os.path.abspath(__file__))+'/elmo'
-    process = subprocess.Popen(command, shell=True, cwd=cwd, executable='/bin/bash', stdout=subprocess.PIPE)
+    process = subprocess.Popen(command, shell=True, cwd=cwd, executable='/bin/bash', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
+    output = output.decode('latin-1') if output else None
+    error = error.decode('latin-1') if error else None
+    
+    nb_traces = output.count('TRACE NO')
 
     # Return results
-    return (
-        output.decode('latin-1') if output else None,
-        error.decode('latin-1') if error else None,
-    )
+    return {
+        'output': output,
+        'error': error,
+        'nb_traces': nb_traces,
+    }
     

@@ -61,7 +61,8 @@ class SocketTool:
         data = json.dumps(data)
         data = data.encode('utf-8')
         s.send(cl.convert_to_bytes(len(data))) # has to be 4 bytes
-        s.send(data)
+        for i in range(0, len(data), 1024*64):
+            s.send(data[i:i+1024*64])
         
     @classmethod
     def get_data(cl, s):
@@ -69,11 +70,7 @@ class SocketTool:
         exception_class = json.decoder.JSONDecodeError if (sys.version_info > (3, 0)) else ValueError
 
         try:
-            size = s.recv(4)
-            if not size:
-                return None
-            size = cl.bytes_to_number(size)
-            data = s.recv(size)
+            data = cl.get_file(s)
             data = data.decode('utf-8')
             data = json.loads(data)
             return data

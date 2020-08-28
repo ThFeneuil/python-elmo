@@ -50,12 +50,12 @@ What is a _simulation project_ ? It is a project to simulate the traces of _one_
 
 To start a new project, you can use the following function.
 
-```python3
-> from elmo_online.manage import create_simulation
-> create_simulation(
->    'dilithium', # The (relative) path of the project
->    'DilithiumSimulation' # The classname of the simulation
->)
+```python
+from elmo_online.manage import create_simulation
+create_simulation(
+   'dilithium', # The (relative) path of the project
+   'DilithiumSimulation' # The classname of the simulation
+)
 ```
 
 This function will create a repository _dilithium_ with all the complete squeleton of the project. In this repository, you can find:
@@ -63,36 +63,69 @@ This function will create a repository _dilithium_ with all the complete squelet
  - The file _projectclass.py_ where there is the class of the simulation which will enable you to generate traces of the project in Python scripts;
  - A _Makefile_ ready to be used with a compiler _arm-none-eabi-gcc_.
  
-_Online ELMO_ offers a example project to you in the repository _projects/Examples_ in the module. This example is a project to generate traces of the execution of the NTT implemented in the cryptosystem [Kyber](https://pq-crystals.org/kyber/).
-
 ### List all the available simulation
 
-```python3
->from elmo_online.manage import search_simulations
->search_simulations('.')
+```python
+from elmo_online.manage import search_simulations
+search_simulations('.')
+```
+
+```python
 {'DilithiumSimulation': <class 'DilithiumSimulation'>,
  'KyberNTTSimulation': <class 'KyberNTTSimulation'>}
 ```
+
+_Online ELMO_ offers a example project to you in the repository _projects/Examples_ of the module. This example is a project to generate traces of the execution of the NTT implemented in the cryptosystem [Kyber](https://pq-crystals.org/kyber/).
 
 ### Use a simulation project
 
 Warning! Before using it, you have to compile your project thanks to the provided Makefile.
 
 ```python
-> from elmo_online.manage import get_simulation
-> KyberSimulation = get_simulation_via_classname('KyberNTTSimulation')
-> 
-> import numpy as np
-> Kyber512 = {'k': 2, 'n': 256}
-> challenges = [
->     np.ones((Kyber512['k'], Kyber512['n']), dtype=int),
-> ]
-> 
-> simulation = KyberSimulation(challenges)
-> simulation.run() # Launch the simulation
-> traces = simulation.get_traces()
-> # And now, I can draw and analyse the traces
+from elmo_online.manage import get_simulation
+KyberNTTSimulation = get_simulation_via_classname('KyberNTTSimulation')
+
+import numpy as np
+Kyber512 = {'k': 2, 'n': 256}
+challenges = [
+    np.ones((Kyber512['k'], Kyber512['n']), dtype=int),
+]
+
+simulation = KyberNTTSimulation(challenges)
+simulation.run() # Launch the simulation
+traces = simulation.get_traces()
+# And now, I can draw and analyse the traces
 ```
+
+### Use a simulution project thanks to a server
+
+Sometimes, it is impossible to run the simulation thanks the simple method _run_ of the project class. Indeed, sometimes the Python script is executed in the environment where _Online ELMO_ cannot launch the ELMO tool. For example, it is the case where _Online ELMO_ is used in SageMath on Windows. On Windows, SageMath installation relies on the Cygwin POSIX emulation system and it can be a problem.
+
+To offer a solution, _Online ELMO_ can be used thanks to a link client-server. The idea is you must launch the script _run_server.py_ which will listen (by default) at port 5000 in localhost.
+
+```bash
+python3 run_server.py
+```
+
+And after, you can manipulate the projects as described in the previous section by replacing _run_ to _run_online_.
+
+```python
+from elmo_online.manage import get_simulation
+KyberNTTSimulation = get_simulation_via_classname('KyberNTTSimulation')
+
+import numpy as np
+Kyber512 = {'k': 2, 'n': 256}
+challenges = [
+    np.ones((Kyber512['k'], Kyber512['n']), dtype=int),
+]
+
+simulation = KyberNTTSimulation(challenges)
+simulation.run_online() # Launch the simulation THANKS TO A SERVER
+traces = simulation.get_traces()
+# And now, I can draw and analyse the traces
+```
+
+Warning! Using the _run_online_ method doesn't exempt you from compiling the project with the provided Makefile.
 
 ### Use the ELMO Engine
 
@@ -110,17 +143,17 @@ The type of the instructions are:
  - "_**OTHER**_" for the other instructions.
 
 ```python
-> from elmo_online.engine import ELMOEngine, Instr
-> engine = ELMOEngine()
-> for i in range(0, 256):
->     engine.add_point(
->         (Instr.LDR, Instr.MUL, Instr.OTHER), # Types of the previous, current and next instructions
->         (0x0000, i), # Operands of the previous instructions
->         (0x2BAC, i)  # Operands of the current instructions
->     )
-> engine.run() # Compute the power consumption of all these points
-> power = engine.power # Numpy 1D array with an entry for each previous point
-> engine.reset_points() # Reset the engine to study other points
+from elmo_online.engine import ELMOEngine, Instr
+engine = ELMOEngine()
+for i in range(0, 256):
+    engine.add_point(
+        (Instr.LDR, Instr.MUL, Instr.OTHER), # Types of the previous, current and next instructions
+        (0x0000, i), # Operands of the previous instructions
+        (0x2BAC, i)  # Operands of the current instructions
+    )
+engine.run() # Compute the power consumption of all these points
+power = engine.power # Numpy 1D array with an entry for each previous point
+engine.reset_points() # Reset the engine to study other points
 ```
 
 ## Licences
