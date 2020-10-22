@@ -79,5 +79,26 @@ assert res['nb_instructions']
 print_success(' - Test 3 "Use A Real Simulation": Success!')
 
 #########################################################
+#          TEST 4 : USE ELMO BY RUNNING ONLINE          #
+#########################################################
+
+def test_online_server():
+    from elmo import get_simulation
+    KyberNTTSimulation = get_simulation('KyberNTTSimulation')
+    simulation = KyberNTTSimulation()
+    simulation.set_challenges(simulation.get_random_challenges(10))
+    return simulation.run_online()
+
+from elmo.executor import launch_executor
+# Launch the server and realize the test
+res = launch_executor('localhost', 5000, waiting_function=test_online_server)
+
+assert not res['error']
+assert res['nb_traces'] == 10
+assert res['nb_instructions']
+
+print_success(' - Test 4 "Use ELMO By Running Online": Success!')
+
+#########################################################
 
 print_success('All seems fine!')

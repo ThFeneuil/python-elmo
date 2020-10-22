@@ -51,39 +51,13 @@ if command == 'create-simulation':
     exit()
 
 if command == 'run-server':
-    from .server.servicethread import ListeningThread
-    from .executorthread import ExecutorThread
+    from .executor import launch_executor
+    
+    host = sys.argv[2] if len(sys.argv) >= 3 else 'localhost'
+    port = int(sys.argv[3]) if len(sys.argv) >= 4 else 5000
 
-    def do_main_program():
-        global thread, stop
-        thread = ListeningThread('localhost', 5000, ExecutorThread)
-        thread.start()
-
-    def program_cleanup(signum, frame):
-        global thread, stop
-        thread.stop()
-        stop = True
-
-    thread = None
-    stop = False
-
-    # Execute
-    print("Executing...")
-    do_main_program()
-    print("Done ! And now, listening...")
-
-    import signal
-    signal.signal(signal.SIGINT, program_cleanup)
-    signal.signal(signal.SIGTERM, program_cleanup)
-
-    # Wait
-    import time
-    while not stop:
-        time.sleep(1)
-        
+    launch_executor(host, port)
     exit()
     
-
-
 print(Color.FAIL + 'Unknown Command.' + Color.ENDC)
 exit()

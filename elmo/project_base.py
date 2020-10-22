@@ -129,21 +129,28 @@ class SimulationProject:
                 'input': input.get_string(),
             })
             if not SocketTool.get_ack(s):
-                raise RuntimeError("NACK received: The request has been refused !")
-            else:
-                SocketTool.send_file(s, '{}/{}'.format(self.get_project_directory(), self.get_binary()))
-                data = SocketTool.get_data(s)
-                if data['error']:
-                    raise Exception("The simulation returned an error: {}".format(data['error']))
+                raise RuntimeError("NACK received: The request has been refused!")
+            
+            SocketTool.send_file(s, '{}/{}'.format(self.get_project_directory(), self.get_binary_path()))
+            if not SocketTool.get_ack(s):
+                raise RuntimeError("NACK received: The binary file has been refused!")
+            
+            data = SocketTool.get_data(s)
+            if data['error']:
+                raise Exception("The simulation returned an error: {}".format(data['error']))
             s.close()
         except IOError as err:
-            raise RuntimeError("The connection refused. Has the ELMO server been switch on ?") from err
+            raise RuntimeError("The connection refused. Has the ELMO server been switch on?") from err
             
         self.is_executed = True
         self.has_been_online = True
         self._complete_asmtrace = data['asmtrace']
         self._complete_results = data['results']
         self._complete_printed_data = data['printed_data']
+        return { key: value
+            for key, value in data.items()
+            if key not in ['results', 'asmtrace', 'printed_data']
+        }
         
     ### Manipulate the ASM trace
     def get_asmtrace_filename(self):

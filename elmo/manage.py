@@ -194,7 +194,9 @@ def execute_simulation(project):
     if not isinstance(project, SimulationProject):
         raise TypeError('The project is not an instance of \'SimulationProject\' class.')
     
-    leaking_binary_path = pjoin(project.get_project_directory(), project.get_binary_path())
+    leaking_binary_path = project.get_binary_path()
+    if not os.path.isabs(leaking_binary_path):
+        leaking_binary_path = pjoin(project.get_project_directory(), project.get_binary_path())
     if not os.path.isfile(leaking_binary_path):
         raise BinaryNotFoundError('Binary not found. Did you compile your project?')
     

@@ -1,5 +1,5 @@
 import threading
-from .server.protocol import Protocol, ClosureException
+from .protocol import Protocol, ClosureException
 import socket
 
 
@@ -44,12 +44,13 @@ class PermanentServiceThread(ServiceThread):
 
 
 class ListeningThread(PermanentServiceThread):
-    def __init__(self, host, port, threadclass, **kwargs):
+    def __init__(self, host, port, threadclass, debug=False, **kwargs):
         super().__init__()
         self.hostname = host
         self.port = port
         self.threadclass = threadclass
         self.kwargs = kwargs
+        self.debug = debug
     
     def execute(self):
         self.tcpsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -58,24 +59,31 @@ class ListeningThread(PermanentServiceThread):
         # self.tcpsock.setsockopt(socket.SOL_SOCKET, socket.SO_ATTACH_REUSEPORT_CBPF, 1)
         self.tcpsock.bind((self.hostname, self.port))
         self.tcpsock.listen(5)
-        print('[port][%s] Listening' % self.port)
+        
+        if self.debug:
+            print('[port][%s] Listening' % self.port)
         
         while self.is_running():
             try:
                 (clientsocket, (ip, port)) = self.tcpsock.accept()
-                print('[port][{}] Accepted: {} <=> {}'.format(
-                    self.port,
-                    clientsocket.getsockname(),
-                    clientsocket.getpeername(),
-                ))
-                newthread = self.threadclass(ip, port, clientsocket, **self.kwargs)
-                newthread.start()
+                if self.is_running():
+                    if self.debug:
+                        print('[port][{}] Accepted: {} <=> {}'.format(
+                            self.port,
+                            clientsocket.getsockname(),
+                            clientsocket.getpeername(),
+                        ))
+                    newthread = self.threadclass(ip, port, clientsocket, **self.kwargs)
+                    newthread.start()
+                else:
+                    break
             except socket.timeout:
                 pass
+
+        print('[port][%s] Stop listening' % self.port)
 
     def stop(self):
         super().stop()
         clientsocker = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        clientsocker.connect( (self.hostname, self.port) )
+        clientsocker.connect((self.hostname, self.port))
         self.tcpsock.close()
-        print('[port][%s] Stop listening' % self.port)
