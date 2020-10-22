@@ -52,9 +52,10 @@ if command == 'create-simulation':
 
 if command == 'run-server':
     from .executor import launch_executor
+    from .config import DEFAULT_HOST, DEFAULT_PORT
     
-    host = sys.argv[2] if len(sys.argv) >= 3 else 'localhost'
-    port = int(sys.argv[3]) if len(sys.argv) >= 4 else 5000
+    host = sys.argv[2] if len(sys.argv) >= 3 else DEFAULT_HOST
+    port = int(sys.argv[3]) if len(sys.argv) >= 4 else DEFAULT_PORT
 
     launch_executor(host, port)
     exit()

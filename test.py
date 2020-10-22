@@ -91,7 +91,7 @@ def test_online_server():
 
 from elmo.executor import launch_executor
 # Launch the server and realize the test
-res = launch_executor('localhost', 5000, waiting_function=test_online_server)
+res = launch_executor(waiting_function=test_online_server)
 
 assert not res['error']
 assert res['nb_traces'] == 10

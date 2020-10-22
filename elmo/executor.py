@@ -4,7 +4,13 @@ import sys
 
 from .server.servicethread import OneShotServiceThread
 
-from .config import MODULE_PATH, ELMO_TOOL_REPOSITORY, ELMO_INPUT_FILE_NAME
+from .config import (
+    MODULE_PATH,
+    ELMO_TOOL_REPOSITORY,
+    ELMO_INPUT_FILE_NAME,
+    DEFAULT_HOST,
+    DEFAULT_PORT,
+)
 from .project_base import SimulationProject
 from .manage import execute_simulation
 
@@ -78,7 +84,7 @@ class Executor(OneShotServiceThread):
         self.protocol.close()
 
 
-def launch_executor(host, port, waiting_function=True):
+def launch_executor(host=DEFAULT_HOST, port=DEFAULT_PORT, waiting_function=True):
     from .server.servicethread import ListeningThread
         
     def do_main_program():
