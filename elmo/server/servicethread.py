@@ -1,5 +1,5 @@
 import threading
-from protocol import Protocol, ClosureException
+from .server.protocol import Protocol, ClosureException
 import socket
 
 

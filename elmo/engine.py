@@ -2,37 +2,20 @@ import numpy as np
 import os
 from enum import IntEnum, unique
 
-def hweight(n):
-    c = 0
-    while n>0:
-        c += (n & 1)
-        n >>= 1
-    return c
-
-def hdistance(x,y):
-    return hweight(x^y)
-
-def binary_writing(n, nb_bits=32, with_hamming=False):
-    n = np.array(n)
-    w, h = np.zeros((nb_bits, len(n))), np.zeros((len(n)))
-
-    for ind in range(nb_bits):
-        w[ind] = (n & 1)
-        h += w[ind]
-
-        n >>= 1
-        ind += 1
-    
-    return (w, h) if with_hamming else w
+from .utils import binary_writing
+from .config import ELMO_TOOL_REPOSITORY
 
 @unique
-class Instr(IntEnum):
+class Instruction(IntEnum):
     EOR = 0
     LSL = 1
     STR = 2
     LDR = 3
     MUL = 4
     OTHER = 5
+    
+# Short name for 'Instruction' class
+Instr = Instruction
 
 PREVIOUS = 0
 CURRENT = 1
@@ -49,7 +32,11 @@ class ELMOEngine:
         return coeffs
 
     def load_coefficients(self):
-        filename = os.path.dirname(os.path.abspath(__file__))+'/elmo/coeffs.txt'
+        filename = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            ELMO_TOOL_REPOSITORY,
+            'coeffs.txt',
+        )
         self.coefficients = None
         with open(filename, 'r') as _file:
             self.coefficients = np.array([list(map(float, line.split())) for line in _file.readlines()[:2153]])

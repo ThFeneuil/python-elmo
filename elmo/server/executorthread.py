@@ -1,4 +1,4 @@
-from servicethread import OneShotServiceThread
+from .server.servicethread import OneShotServiceThread
 import subprocess
 
 import shutil

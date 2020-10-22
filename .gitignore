@@ -1,2 +1,5 @@
+**/__pycache__/**
+build/*
+python_elmo.egg-info/*
 *.pyc
-elmo/*
+.DS_Store

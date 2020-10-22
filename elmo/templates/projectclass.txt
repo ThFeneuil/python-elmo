@@ -4,12 +4,11 @@
 ###            to write an integer of 'nb_bits' bits in the 'input_file'.
 ### To get this simulation class in Python scripts, please use the functions in manage.py as
 ###  - search_simulations(repository)
-###  - get_simulation(repository, classname=None)
-###  - get_simulation_via_classname(classname)
+###  - get_simulation(repository='.', classname=None)
 
 class {{PROJECTCLASSNAME}}(SimulationProject):
     @classmethod
-    def get_binary(cl):
+    def get_binary_path(cl):
         return 'project.bin'
 
     def __init__(self, *args, **kwargs):

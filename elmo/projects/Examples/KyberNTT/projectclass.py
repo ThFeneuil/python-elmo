@@ -8,8 +8,11 @@
 ###  - get_simulation_via_classname(classname)
 
 class KyberNTTSimulation(SimulationProject):
+    KYBER_K = 2 #k=2 for Kyber512
+    KYBER_N = 256 #n=256 for Kyber512
+    
     @classmethod
-    def get_binary(cl):
+    def get_binary_path(cl):
         return 'project.bin'
 
     def __init__(self, *args, **kwargs):
@@ -26,6 +29,23 @@ class KyberNTTSimulation(SimulationProject):
         secret = challenge
 
         # Write the secret vector
-        for j in range(2): #k=2 for Kyber512
-            for k in range(256): #n=256 for Kyber512
+        for j in range(self.KYBER_K):
+            for k in range(self.KYBER_N):
                 write(input, secret[j,k])
+                
+    def get_test_challenges(self):
+        import numpy as np
+        just_ones = np.ones((self.KYBER_K, self.KYBER_N), dtype=int)
+        return [
+             0 * just_ones,
+             1 * just_ones,
+            -2 * just_ones,
+        ]
+        
+    def get_random_challenges(self, nb_challenges=5):
+        import numpy as np
+        return [ np.random.choice(
+            [-2, -1, 0, 1, 2],
+            (self.KYBER_K, self.KYBER_N),
+            p=[1/16, 4/16, 6/16, 4/16, 1/16],
+        ) for _ in range(nb_challenges) ]

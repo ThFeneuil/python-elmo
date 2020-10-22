@@ -1,41 +1,21 @@
 import os, re
-import socket
-from .protocol import SocketTool
 import numpy as np
 
-def to_hex(v, nb_bits=16):
-    try:
-        v_hex = v.hex()
-    except AttributeError:
-        v_hex = hex(v)[2:]
-    return '0'*(nb_bits//4-len(v_hex)) + v_hex
-
-def split_octet(hexstr):
-    return [hexstr[i:i+2] for i in range(0, len(hexstr), 2)]
-
-def to_signed_hex(v, nb_bits=16):
-    try:
-        return split_octet(to_hex(v & (2**nb_bits-1), nb_bits=nb_bits))
-    except TypeError as err:
-        raise TypeError('Error to transform a <{}> into signed hex.'.format(type(v))) from err
-
-def write(_input, uintXX, nb_bits=16):
-    uintXX = to_signed_hex(uintXX, nb_bits=nb_bits)
-    for i in range(nb_bits//8):
-        _input.write(uintXX[i]+'\n')
-    
-def write_list(_input, uint16_list):
-    for uint16 in uint16_list:
-        write(_input, uint16)
-
+from .config import MODULE_PATH, ELMO_TOOL_REPOSITORY
+from .utils import write
 
 class SimulationProject:
+    # TAG: EXCLUDE-FROM-SIMULATION-SEARCH
+    """ Class to manage a simultion
+    It contains all the parameters of the simulation and has method to use it
+    """
     _nb_bits_for_nb_challenges = 16
     _project_directory = None
     
     ### Define the project
     @classmethod
     def get_project_directory(cl):
+        """ """
         if cl._project_directory:
             return cl._project_directory
         else:
@@ -54,16 +34,12 @@ class SimulationProject:
         return ''
         
     @classmethod
-    def get_binary(cl):
+    def get_binary_path(cl):
         raise NotImplementedError()
         
     @classmethod
     def get_parameters_names(cl):
         return set()
-        
-    @classmethod
-    def adapt_project(cl, parameters):
-        return
         
     def get_challenge_format(self):
         raise NotImplementedError()
@@ -71,7 +47,7 @@ class SimulationProject:
 
     ### Tools to realize the simulation of the project
     def __init__(self, challenges=None):
-        self.elmo_folder = os.path.dirname(os.path.abspath(__file__))+'/elmo'
+        self.elmo_folder = os.path.join(MODULE_PATH, ELMO_TOOL_REPOSITORY)
         self.challenges = challenges
         self.reset()
         
@@ -82,6 +58,12 @@ class SimulationProject:
         self._complete_asmtrace = None
         self._complete_results = None
         self._complete_printed_data = None
+    
+    def get_test_challenges(self):
+        raise NotImplementedError()
+
+    def get_random_challenges(self, nb_challenges):
+        raise NotImplementedError()
     
     def set_challenges(self, challenges):
         self.challenges = challenges
@@ -104,10 +86,15 @@ class SimulationProject:
             aux(format[num_part], challenge[num_part])
 
     def set_input(self, input):
-        assert len(self.challenges) < 2**16, 'The number of challenges must be strictly lower than 65536. Currently, there are {} challenges.'.format(len(self.challenges))
-        write(input, len(self.challenges), nb_bits=self._nb_bits_for_nb_challenges)
-        for challenge in self.challenges:
-            self.set_input_for_each_challenge(input, challenge)
+        if self.challenges:
+            assert len(self.challenges) < (1 << self._nb_bits_for_nb_challenges), \
+                'The number of challenges must be strictly lower than {}. Currently, there are {} challenges.'.format(
+                    1 << self._nb_bits_for_nb_challenges,
+                    len(self.challenges),
+                )
+            write(input, len(self.challenges), nb_bits=self._nb_bits_for_nb_challenges)
+            for challenge in self.challenges:
+                self.set_input_for_each_challenge(input, challenge)
             
     def run(self):
         self.reset()
@@ -120,6 +107,9 @@ class SimulationProject:
         return res
         
     def run_online(self, host='localhost', port=5000):
+        from .server.protocol import SocketTool
+        import socket
+
         class TempInput:
             def __init__(self):
                 self._buffer = ''

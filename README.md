@@ -1,6 +1,6 @@
-# Online ELMO
+# Python ELMO
 
-_Online ELMO_ is a Python library which proposes an encapsulation of the project _ELMO_.
+_Python ELMO_ is a Python library which proposes an encapsulation of the project _ELMO_.
 
 [MOW17] **Towards Practical Tools for Side
 Channel Aware Software Engineering : ’Grey Box’ Modelling for Instruction Leakages**
@@ -11,13 +11,9 @@ https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentati
 
 ## Requirements
 
-To use _Online ELMO_, you need at least Python3.5 and the packages present in the file requirements.txt
+To use _Python ELMO_, you need at least Python3.5 and ```numpy```.
 
-```bash
-pip3 install -r requirements.txt
-```
-
-The library will install and compile ELMO. So, you need the GCC compiler collection  and the command/utility 'make' (for more details, see the documentation of ELMO). On Ubuntu/Debian,
+The library will install and compile ELMO. So, you need the GCC compiler collection and the command/utility 'make' (for more details, see the documentation of ELMO). On Ubuntu/Debian,
 
 ```bash
 sudo apt install build-essential
@@ -27,16 +23,16 @@ To use ELMO on a leaking binary program, you need to compile the C implementatio
 
 ## Installation
 
-First, download _Online ELMO_.
+First, download _Python ELMO_.
 
 ```bash
-git clone https://git.aprilas.fr/tfeneuil/OnlineELMO
+git clone https://git.aprilas.fr/tfeneuil/python-elmo
 ```
 
 And then, install ELMO thanks to the script of installation.
 
 ```bash
-./install
+python setup.py install
 ```
 
 ## Usage
@@ -51,7 +47,7 @@ What is a _simulation project_ ? It is a project to simulate the traces of _one_
 To start a new project, you can use the following function.
 
 ```python
-from elmo_online.manage import create_simulation
+from elmo.manage import create_simulation
 create_simulation(
    'dilithium', # The (relative) path of the project
    'DilithiumSimulation' # The classname of the simulation
@@ -66,7 +62,7 @@ This function will create a repository _dilithium_ with all the complete squelet
 ### List all the available simulation
 
 ```python
-from elmo_online.manage import search_simulations
+from elmo.manage import search_simulations
 search_simulations('.')
 ```
 
@@ -75,14 +71,14 @@ search_simulations('.')
  'KyberNTTSimulation': <class 'KyberNTTSimulation'>}
 ```
 
-_Online ELMO_ offers a example project to you in the repository _projects/Examples_ of the module. This example is a project to generate traces of the execution of the NTT implemented in the cryptosystem [Kyber](https://pq-crystals.org/kyber/).
+_Python ELMO_ offers a example project to you in the repository _projects/Examples_ of the module. This example is a project to generate traces of the execution of the NTT implemented in the cryptosystem [Kyber](https://pq-crystals.org/kyber/).
 
 ### Use a simulation project
 
 Warning! Before using it, you have to compile your project thanks to the provided Makefile.
 
 ```python
-from elmo_online.manage import get_simulation
+from elmo.manage import get_simulation
 KyberNTTSimulation = get_simulation_via_classname('KyberNTTSimulation')
 
 import numpy as np
@@ -97,21 +93,21 @@ traces = simulation.get_traces()
 # And now, I can draw and analyse the traces
 ```
 
-### Use a simulution project thanks to a server
+### Use a simulation project thanks to a server
 
-Sometimes, it is impossible to run the simulation thanks the simple method _run_ of the project class. Indeed, sometimes the Python script is executed in the environment where _Online ELMO_ cannot launch the ELMO tool. For example, it is the case where _Online ELMO_ is used in SageMath on Windows. On Windows, SageMath installation relies on the Cygwin POSIX emulation system and it can be a problem.
+Sometimes, it is impossible to run the simulation thanks the simple method _run_ of the project class. Indeed, sometimes the Python script is executed in the environment where _Python ELMO_ cannot launch the ELMO tool. For example, it is the case where _Python ELMO_ is used in SageMath on Windows. On Windows, SageMath installation relies on the Cygwin POSIX emulation system and it can be a problem.
 
-To offer a solution, _Online ELMO_ can be used thanks to a link client-server. The idea is you must launch the script _run_server.py_ which will listen (by default) at port 5000 in localhost.
+To offer a solution, _Online ELMO_ can be used thanks to a link client-server. The idea is you must launch the script _run\_server.py_ which will listen (by default) at port 5000 in localhost.
 
 ```bash
-python3 run_server.py
+python -m elmo run-server
 ```
 
-And after, you can manipulate the projects as described in the previous section by replacing _run_ to _run_online_.
+And after, you can manipulate the projects as described in the previous section by replacing _run_ to _run\_online_.
 
 ```python
-from elmo_online.manage import get_simulation
-KyberNTTSimulation = get_simulation_via_classname('KyberNTTSimulation')
+from elmo.manage import get_simulation
+KyberNTTSimulation = get_simulation('KyberNTTSimulation')
 
 import numpy as np
 Kyber512 = {'k': 2, 'n': 256}
@@ -125,7 +121,7 @@ traces = simulation.get_traces()
 # And now, I can draw and analyse the traces
 ```
 
-Warning! Using the _run_online_ method doesn't exempt you from compiling the project with the provided Makefile.
+Warning! Using the _run\_online_ method doesn't exempt you from compiling the project with the provided Makefile.
 
 ### Use the ELMO Engine
 
@@ -143,7 +139,7 @@ The type of the instructions are:
  - "_**OTHER**_" for the other instructions.
 
 ```python
-from elmo_online.engine import ELMOEngine, Instr
+from elmo.engine import ELMOEngine, Instr
 engine = ELMOEngine()
 for i in range(0, 256):
     engine.add_point(
