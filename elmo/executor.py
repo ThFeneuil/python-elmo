@@ -18,6 +18,8 @@ from .utils import Color
 
 class Executor(OneShotServiceThread):
     def execute(self):
+        """ Answer a request of simulation """
+        # Get simulation data
         data = self.protocol.get_data()
         self.protocol.please_assert(data)
         
@@ -85,6 +87,7 @@ class Executor(OneShotServiceThread):
 
 
 def launch_executor(host=DEFAULT_HOST, port=DEFAULT_PORT, waiting_function=True):
+    """ Launch ELMO server on 'host' listening to the 'port' """
     from .server.servicethread import ListeningThread
         
     def do_main_program():
@@ -95,12 +98,15 @@ def launch_executor(host=DEFAULT_HOST, port=DEFAULT_PORT, waiting_function=True)
     def program_cleanup(signum, frame):
         thread.stop()
 
+    # Launch the listening server
     thread = do_main_program()
     
+    # Give a way to stop the server
     import signal
     signal.signal(signal.SIGINT, program_cleanup)
     signal.signal(signal.SIGTERM, program_cleanup)
     
+    # Do somthing during the execution of the server
     if waiting_function is True:
         import time
         while thread.is_running():

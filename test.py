@@ -76,6 +76,18 @@ assert not res['error']
 assert res['nb_traces'] == 10
 assert res['nb_instructions']
 
+# Test the methods for analysis
+multiplication_indexes = simulation.get_indexes_of(lambda instr: 'mul' in instr)
+asmtrace = simulation.get_asmtrace()
+for index, instr in enumerate(asmtrace):
+    assert ('mul' in instr) == (index in multiplication_indexes)
+
+traces = simulation.get_traces()
+traces = simulation.get_traces(multiplication_indexes)
+assert traces.shape == (10, len(multiplication_indexes))
+
+printed_data = simulation.get_printed_data()
+
 print_success(' - Test 3 "Use A Real Simulation": Success!')
 
 #########################################################

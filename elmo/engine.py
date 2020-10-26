@@ -22,6 +22,7 @@ CURRENT = 1
 SUBSEQUENT = 2
 
 class ELMOEngine:
+    ### Initialization
     def __init__(self):
         self.load_coefficients()
         self.reset_points()
@@ -32,6 +33,7 @@ class ELMOEngine:
         return coeffs
 
     def load_coefficients(self):
+        """ Load the coefficients for the ELMO model about power leakage """
         filename = os.path.join(
             os.path.dirname(os.path.abspath(__file__)),
             ELMO_TOOL_REPOSITORY,
@@ -70,13 +72,7 @@ class ELMOEngine:
         self.BitFlip1_bitinteractions = self._extract_data(496)
         self.BitFlip2_bitinteractions = self._extract_data(496)
     
-    def reset_points(self):
-        self.points = []
-        self.power = None
-        
-    def add_point(self, triplet, previous_ops, current_ops):
-        self.points.append((triplet, previous_ops, current_ops))
-    
+    ### Computation core
     def _dot(self, a, b):
         return np.sum(a * b, axis=0)
         
@@ -174,7 +170,20 @@ class ELMOEngine:
                        BitFlip1_bitinteractions_data, BitFlip2_bitinteractions_data])
         return power
     
+    ### To manage studied points
+    def reset_points(self):
+        """ Reset all the points previously added """
+        self.points = []
+        self.power = None
+
+    def add_point(self, triplet, previous_ops, current_ops):
+        """ Add a new point to analyse """
+        self.points.append((triplet, previous_ops, current_ops))    
+        
     def run(self):
+        """ Compute the power leakage of all the points previously added 
+        Store the results in 'self.power'
+        """
         nb_points = len(self.points)
         triplet = np.array([p[0] for p in self.points]).T # shape = (3, nb_points)
         previous_ops = np.array([p[1] for p in self.points]).T # shape = (2, nb_points)
@@ -183,6 +192,9 @@ class ELMOEngine:
         self.power = self.calculate_point(triplet, previous_ops, current_ops)
     
     def oneshot_point(self, triplet, previous_ops, current_ops):
+        """ Compute the power of a single point
+                defined by 'triplet', 'previous_ops', and 'current_ops'
+        """
         self.reset_points()
         self.add_point(triplet, previous_ops, current_ops)
         self.run()

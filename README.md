@@ -61,6 +61,22 @@ This function will create a repository _dilithium_ with all the complete squelet
  - The file _projectclass.py_ where there is the class of the simulation which will enable you to generate traces of the project in Python scripts;
  - A _Makefile_ ready to be used with a compiler _arm-none-eabi-gcc_.
  
+Usually a leaking code runs challenges, one challenge giving a power trace. A challenge is the execution of a code with a specific set of data. This set of data is given in the input of the leakage simulation. For example, one can imagine that the leaking code is a symmetric encryption and one wants to study its power leakage according to the message and the secret key. Then, a challenge is the simulation of the leakage for a specific message and for a specific secret key.
+
+So, the classical form of _project.c_ is the following one:
+ - It gets a number of challenges with ```readbyte```.
+ - Then, it loops for each challenge.
+   - For the challenge, load the specific set of data with ```readbyte```.
+   - Start the record of the power leakage (start a power trace)
+   - Realise the leaking operations with the loaded set of data
+   - Stop the record of the power leakage (end a power trace)
+   - Eventually output some data with ```printbyte```
+ - Indicate to ELMO tool that the simulation is finished
+ 
+The file _projectclass.py_ contains a subclass of ```SimulationProject```. It contains the description of the _project.c_ file for the ELMO tool, in order to correctly realise the simulation. The classmethod ```get_binary_path(cl)``` must return the relative path of the leakage binary (_project.c_ correctly compiled). The method ```set_input_for_each_challenge(self, input, challenge)``` must write a ```challenge``` in ```input``` using the function ```write```. Many methods of ```SimulationProject``` can be rewritten in the subclass if necessary. For example, in the case where your _project.c_ doesn't run challenges, you can rewrite the method ```set_input(self, input)```.
+
+Important! Don't forget that _ELMO_ (and so _Python-ELMO_) needs a **compiled** version of _project.c_ (see the "Requirements" section for more details). The provided _Makefile_ is here to help you to compile.
+
 ### List all the available simulation
 
 ```python
@@ -96,7 +112,7 @@ traces = simulation.get_traces()
 
 Sometimes, it is impossible to run the simulation thanks the simple method ```run``` of the project class. Indeed, sometimes the Python script is executed in the environment where _Python-ELMO_ cannot launch the ELMO tool. For example, it is the case where _Python-ELMO_ is used in SageMath on Windows. On Windows, SageMath installation relies on the Cygwin POSIX emulation system and it can be a problem.
 
-To offer a solution, _Python-ELMO_ can be used thanks to a client-server link. The idea is you must launch the script ```run_server.py``` which will listen (by default) at port 5000 in localhost.
+To offer a solution, _Python-ELMO_ can be used thanks to a client-server link. The idea is you must launch the following script which will listen (by default) at port 5000 in localhost.
 
 ```bash
 python -m elmo run-server

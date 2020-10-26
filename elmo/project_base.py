@@ -22,7 +22,7 @@ class SimulationProject:
     ### Define the project
     @classmethod
     def get_project_directory(cl):
-        """ """
+        """ Return the project directory of the simulation """
         if cl._project_directory:
             return cl._project_directory
         else:
@@ -30,35 +30,32 @@ class SimulationProject:
     
     @classmethod
     def set_project_directory(cl, project_directory):
+        """ Set the project directory of the simulation """
         cl._project_directory = project_directory
 
     @classmethod
-    def get_project_label(cl):
-        return cl.get_project_directory()
-
-    @classmethod
-    def get_make_directory(cl):
-        return ''
-        
-    @classmethod
     def get_binary_path(cl):
+        """ Return the path of the leaking binary """
         raise NotImplementedError()
         
-    @classmethod
-    def get_parameters_names(cl):
-        return set()
-        
     def get_challenge_format(self):
+        """ Return the format of one challenge
+        Used by 'set_input_for_each_challenge' if not rewritten
+        """
         raise NotImplementedError()
 
 
     ### Tools to realize the simulation of the project
     def __init__(self, challenges=None):
+        """ Initialize a simulation project
+        :challenge: The list of challenge for the simulation
+        """
         self.elmo_folder = pjoin(MODULE_PATH, ELMO_TOOL_REPOSITORY)
         self.challenges = challenges
         self.reset()
         
     def reset(self):
+        """ Reset the last simulation """
         self.is_executed = False
         self.has_been_online = False
 
@@ -67,26 +64,50 @@ class SimulationProject:
         self._complete_results = None
         self._complete_printed_data = None
     
+    def get_number_of_challenges(self):
+        """ Return the number of challenge """
+        return len(self.challenges) if self.challenges else 0
+        
     def get_test_challenges(self):
+        """ Return a fixed list of challenges for test """
         raise NotImplementedError()
 
     def get_random_challenges(self, nb_challenges):
+        """ Return a list of random challenges 
+        :nb_challenges: Length of the list
+        """
         raise NotImplementedError()
     
     def set_challenges(self, challenges):
+        """ Reset the simulation and set the challenges of the next simulation
+        :challenges: The list of the challenges
+        """
         self.reset()
         self.challenges = challenges
 
     def get_input_filename(self):
+        """ Return (string) the path of the input file
+        of the local installation of ELMO tool
+        """
         return pjoin(self.elmo_folder, ELMO_INPUT_FILE_NAME)
 
     def get_printed_data_filename(self):
+        """ Return the path (string) of the file containing the printed data
+        of the local installation of ELMO tool
+        """
         return pjoin(self.elmo_folder, 'output', 'printdata.txt')
 
     def get_asmtrace_filename(self):
+        """ Return the path (string) of the file containing the ASM trace
+        of the local installation of ELMO tool
+        """
         return pjoin(self.elmo_folder, 'output', 'asmoutput', 'asmtrace00001.txt')
     
     def set_input_for_each_challenge(self, input, challenge):
+        """ Set the input for one challenge for a simulation with ELMO tool
+        :input: Descriptor of the input of the ELMO tool (write only)
+        :challenge: A challenge for the simulation
+        """
         format = self.get_challenge_format()
 
         def aux(sizes, data):
@@ -101,17 +122,30 @@ class SimulationProject:
             aux(format[num_part], challenge[num_part])
 
     def set_input(self, input):
+        """ Set the input for a simulation with ELMO tool
+        First, it writes the number of challenges.
+        Then, it writes each challenge one by one thanks to the method 'set_input_for_each_challenge'
+        :input: Descriptor of the input of the ELMO tool (write only)
+        """
         if self.challenges:
-            assert len(self.challenges) < (1 << self._nb_bits_for_nb_challenges), \
+            nb_challenges = self.get_number_of_challenges()
+            assert nb_challenges < (1 << self._nb_bits_for_nb_challenges), \
                 'The number of challenges must be strictly lower than {}. Currently, there are {} challenges.'.format(
                     1 << self._nb_bits_for_nb_challenges,
-                    len(self.challenges),
+                    nb_challenges,
                 )
-            write(input, len(self.challenges), nb_bits=self._nb_bits_for_nb_challenges)
+            write(input, nb_challenges, nb_bits=self._nb_bits_for_nb_challenges)
             for challenge in self.challenges:
                 self.set_input_for_each_challenge(input, challenge)
             
     def run(self):
+        """ Run the simulation thanks the local installation of ELMO tool.
+        Using the leaking binary defined thanks to the method 'get_binary_path',
+            it will run the ELMO tool to output the leaked power traces.
+        The results of the simulation are available via the methods:
+            'get_results', 'get_traces', 'get_asmtrace' and 'get_printed_data'
+        Return the raw output of the compiled ELMO tool.
+        """
         self.reset()
         with open(self.get_input_filename(), 'w') as _input:
             self.set_input(_input)
@@ -125,6 +159,17 @@ class SimulationProject:
         return res
         
     def run_online(self, host=DEFAULT_HOST, port=DEFAULT_PORT):
+        """ Run the simulation thanks to an ELMO server.
+        An ELMO server can be launched thanks to the command
+            >>> python -m elmo run-server 'host' 'port'
+        Using the leaking binary defined thanks to the method 'get_binary_path',
+            it will run the ELMO tool to output the leaked power traces.
+        The results of the simulation are available via the methods:
+            'get_results', 'get_traces', 'get_asmtrace' and 'get_printed_data'
+        Return the raw output of the compiled ELMO tool.
+        :host: The host of the ELMO server
+        :post! The port where the ELMO server is currently listening
+        """
         from .server.protocol import SocketTool
         import socket
 
@@ -172,14 +217,15 @@ class SimulationProject:
         }
         
     ### Manipulate the results
-    def get_number_of_challenges(self):
-        return len(self.challenges)
-        
     def get_number_of_traces(self):
+        """ Get the number of traces of the last simulation """
         assert self.is_executed
         return self._nb_traces
     
     def get_results_filenames(self):
+        """ Get the filenames of the results of the last simulation
+        Return a list of filenames (strings), each file containing a power trace
+        """
         assert self.is_executed
         assert not self.has_been_online
         nb_traces = self.get_number_of_traces()
@@ -194,7 +240,8 @@ class SimulationProject:
         return filenames            
     
     def get_results(self):
-        """
+        """ Get the raw outputs of the last simulation
+        Return a list of power traces (represented by a list of floats)
         Warning: The output list is the same object stored in the instance.
             If you change this object, it will change in the instance too, and the
             next call to 'get_results' will return the changed object.
@@ -212,7 +259,12 @@ class SimulationProject:
         return self._complete_results
     
     def get_traces(self, indexes=None):
-        """
+        """ Get the power trace of the last simulation
+        Return a 2-dimensional numpy array of floats.
+            1st dimension: number of the trace
+            2nd dimension: power point of the trace
+        :indexes: if not None, return only the power points contained in :indexes:
+            Must be a list of indexes of power points.
         """
         assert self.is_executed
         results = self.get_results()
@@ -229,7 +281,7 @@ class SimulationProject:
         else:
             traces = np.zeros((nb_traces, len(indexes)))
             for i in range(nb_traces):
-                traces[i,:] = results[i][indexes]
+                traces[i,:] = np.array(results[i])[indexes]
             return traces
 
     ### Manipulate the ASM trace
@@ -244,7 +296,7 @@ class SimulationProject:
         if self._complete_asmtrace is None:
             with open(self.get_asmtrace_filename(), 'r') as _file:
                 self._complete_asmtrace = _file.read()        
-        if type(self._complete_asmtrace):
+        if type(self._complete_asmtrace) is not list:
             self._complete_asmtrace = self._complete_asmtrace.split('\n')   
         
         return self._complete_asmtrace 

@@ -16,6 +16,7 @@ int main(void) {
 
   read2bytes(&nb_challenges);
   for(num_challenge=0; num_challenge<nb_challenges; num_challenge++) {
+    // Set variables for the current challenge
 
     starttrigger(); // To start a new trace
     // Do the leaking operations here...
