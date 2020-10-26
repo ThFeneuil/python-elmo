@@ -56,26 +56,30 @@ create_simulation(
 )
 ```
 
-This function will create a repository _dilithium_ with all the complete squeleton of the project. In this repository, you can find:
- - The file _project.c_ where you must put the leaking code;
- - The file _projectclass.py_ where there is the class of the simulation which will enable you to generate traces of the project in Python scripts;
- - A _Makefile_ ready to be used with a compiler _arm-none-eabi-gcc_.
+This function will create a repository ```dilithium``` with all the complete squeleton of the project. In this repository, you can find:
+ - The file ```project.c``` where you must put the leaking code;
+ - The file ```projectclass.py``` where there is the class of the simulation which will enable you to generate traces of the project in Python scripts;
+ - A ```Makefile``` ready to be used with a compiler _arm-none-eabi-gcc_.
  
 Usually a leaking code runs challenges, one challenge giving a power trace. A challenge is the execution of a code with a specific set of data. This set of data is given in the input of the leakage simulation. For example, one can imagine that the leaking code is a symmetric encryption and one wants to study its power leakage according to the message and the secret key. Then, a challenge is the simulation of the leakage for a specific message and for a specific secret key.
 
-So, the classical form of _project.c_ is the following one:
+So, the classical form of ```project.c``` is the following one:
  - It gets a number of challenges with ```readbyte```.
  - Then, it loops for each challenge.
    - For the challenge, load the specific set of data with ```readbyte```.
-   - Start the record of the power leakage (start a power trace)
-   - Realise the leaking operations with the loaded set of data
-   - Stop the record of the power leakage (end a power trace)
-   - Eventually output some data with ```printbyte```
- - Indicate to ELMO tool that the simulation is finished
+   - Start the record of the power leakage (start a power trace) with ```starttrigger```.
+   - Realise the leaking operations with the loaded set of data.
+   - Stop the record of the power leakage (end a power trace) with ```endtrigger```.
+   - Eventually output some data with ```printbyte```.
+ - Indicate to ELMO tool that the simulation is finished with ```endprogram```.
  
-The file _projectclass.py_ contains a subclass of ```SimulationProject```. It contains the description of the _project.c_ file for the ELMO tool, in order to correctly realise the simulation. The classmethod ```get_binary_path(cl)``` must return the relative path of the leakage binary (_project.c_ correctly compiled). The method ```set_input_for_each_challenge(self, input, challenge)``` must write a ```challenge``` in ```input``` using the function ```write```. Many methods of ```SimulationProject``` can be rewritten in the subclass if necessary. For example, in the case where your _project.c_ doesn't run challenges, you can rewrite the method ```set_input(self, input)```.
+The file ```projectclass.py``` contains a subclass of ```SimulationProject```. It contains the description of the ```project.c``` file for the ELMO tool, in order to correctly realise the simulation.
+ - The classmethod ```get_binary_path(cl)``` must return the relative path of the leakage binary (```project.c``` correctly compiled).
+ - The method ```set_input_for_each_challenge(self, input, challenge)``` must write a ```challenge``` in ```input``` using the function ```write```.
 
-Important! Don't forget that _ELMO_ (and so _Python-ELMO_) needs a **compiled** version of _project.c_ (see the "Requirements" section for more details). The provided _Makefile_ is here to help you to compile.
+Many methods of ```SimulationProject``` can be rewritten in the subclass if necessary. For example, in the case where your ```project.c``` doesn't run challenges, you can rewrite the method ```set_input(self, input)```.
+
+Important! Don't forget that _ELMO_ (and so _Python-ELMO_) needs a **compiled** version of ```project.c``` (see the "Requirements" section for more details). The provided ```Makefile``` is here to help you to compile.
 
 ### List all the available simulation
 
@@ -89,7 +93,7 @@ search_simulations('.')
  'KyberNTTSimulation': <class 'KyberNTTSimulation'>}
 ```
 
-_Python-ELMO_ offers a example project to you in the repository _projects/Examples_ of the module. This example is a project to generate traces of the execution of the NTT implemented in the cryptosystem [Kyber](https://pq-crystals.org/kyber/).
+_Python-ELMO_ offers a example project to you in the repository ```projects/Examples``` of the module. This example is a project to generate traces of the execution of the NTT implemented in the cryptosystem [Kyber](https://pq-crystals.org/kyber/).
 
 ### Use a simulation project
 
