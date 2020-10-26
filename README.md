@@ -41,8 +41,8 @@ python setup.py install
 
 ### Create a new simulation project
 
-What is a _simulation project_ ? It is a project to simulate the traces of _one_ binary program. It includes
- - A Python class which enable to generate traces in Python;
+What is a _simulation project_ ? It is a project to simulate the power traces of _one_ binary program. It includes
+ - A Python class to manage the project;
  - The C program which will be compile to have the binary program for the analysis;
  - A linker script where the configuration of the simulated device are defined.
 
@@ -73,7 +73,7 @@ So, the classical form of ```project.c``` is the following one:
    - Eventually output some data with ```printbyte```.
  - Indicate to ELMO tool that the simulation is finished with ```endprogram```.
  
-The file ```projectclass.py``` contains a subclass of ```SimulationProject```. It contains the description of the ```project.c``` file for the ELMO tool, in order to correctly realise the simulation.
+The file ```projectclass.py``` contains a subclass of ```SimulationProject```. It is the description of the ```project.c``` file for the ELMO tool, in order to correctly realise the simulation. It also provides methods to manage the simulation (see following sections).
  - The classmethod ```get_binary_path(cl)``` must return the relative path of the leakage binary (```project.c``` correctly compiled).
  - The method ```set_input_for_each_challenge(self, input, challenge)``` must write a ```challenge``` in ```input``` using the function ```write```.
 
