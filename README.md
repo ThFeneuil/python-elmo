@@ -1,6 +1,6 @@
 # Python-ELMO
 
-_Python-ELMO_ is a Python library which proposes an encapsulation of the project _ELMO_.
+_Python-ELMO_ is a Python library which proposes an encapsulation of the project _ELMO_, a statistical leakage simulator for the ARM M0 family.
 
 [MOW17] **Towards Practical Tools for Side
 Channel Aware Software Engineering : ’Grey Box’ Modelling for Instruction Leakages**
@@ -8,8 +8,6 @@ by _David McCann, Elisabeth Oswald et Carolyn Whitnall_.
 https://www.usenix.org/conference/usenixsecurity17/technical-sessions/presentation/mccann
 
 **ELMO GitHub**: https://github.com/sca-research/ELMO
-
-**Python-ELMO Contributors**: Thibauld Feneuil
 
 ## Requirements
 
@@ -28,7 +26,7 @@ To use ELMO on a leaking binary program, you need to compile the C implementatio
 First, download _Python-ELMO_.
 
 ```bash
-git clone https://git.aprilas.fr/tfeneuil/python-elmo
+git clone https://github.com/ThFeneuil/python-elmo
 ```
 
 And then, install ELMO thanks to the installation script. It will use Internet to download the [ELMO project](https://github.com/sca-research/ELMO).
@@ -60,7 +58,7 @@ This function will create a repository ```dilithium``` with all the complete squ
  - The file ```project.c``` where you must put the leaking code;
  - The file ```projectclass.py``` where there is the class of the simulation which will enable you to generate traces of the project in Python scripts;
  - A ```Makefile``` ready to be used with a compiler _arm-none-eabi-gcc_.
- 
+
 Usually a leaking code runs challenges, one challenge giving a power trace. A challenge is the execution of a code with a specific set of data. This set of data is given in the input of the leakage simulation. For example, one can imagine that the leaking code is a symmetric encryption and one wants to study its power leakage according to the message and the secret key. Then, a challenge is the simulation of the leakage for a specific message and for a specific secret key.
 
 So, the classical form of ```project.c``` is the following one:
@@ -72,7 +70,7 @@ So, the classical form of ```project.c``` is the following one:
    - Stop the record of the power leakage (end a power trace) with ```endtrigger```.
    - Eventually output some data with ```printbyte```.
  - Indicate to ELMO tool that the simulation is finished with ```endprogram```.
- 
+
 The file ```projectclass.py``` contains a subclass of ```SimulationProject```. It is the description of the ```project.c``` file for the ELMO tool, in order to correctly realise the simulation. It also provides methods to manage the simulation (see following sections).
  - The classmethod ```get_binary_path(cl)``` must return the relative path of the leakage binary (```project.c``` correctly compiled).
  - The method ```set_input_for_each_challenge(self, input, challenge)``` must write a ```challenge``` in ```input``` using the function ```write```.

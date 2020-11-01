@@ -45,17 +45,17 @@ def install_elmo_tool(elmo_complete_path):
         elmodefines_h = ''.join(elmodefines_lines)
     with open(elmodefines_h_path, 'w') as _file:
         _file.write(elmodefines_h)
-    
+
     # Compile the tool
     check_call("make clean".split(), cwd=elmo_complete_path)
     check_call("make".split(), cwd=elmo_complete_path)
 
-        
+
 class PostBuildCommand(build_py):
     """ Build Command to add the ELMO installation """
     def run(self):
         build_py.run(self)
-        
+
         # ELMO Installation
         elmo_complete_path = os.path.join(
             self.build_lib,
@@ -72,25 +72,35 @@ if __name__ == '__main__':
 
     setuptools.setup(
         name="python-elmo",
-        version="0.0.1",
+        version="0.1.0",
         author="Thibauld Feneuil",
         author_email="thibauld.feneuil@cryptoexperts.com",
-        description="Emulator for power Leakage for the M0",
+        description="A Python encapsulation of a statistical leakage simulator for the ARM M0 family",
         long_description=long_description,
         long_description_content_type="text/markdown",
         url=PELMO_SOURCE,
         project_urls={
-            'ELMO Source': ELMO_SOURCE,
-            'pELMO Source': PELMO_SOURCE,
+            "ELMO Source": ELMO_SOURCE,
         },
         packages=setuptools.find_packages(),
+        keywords="python3 crypto",
         classifiers=[
+            "Development Status :: 2 - Pre-Alpha",
+            "Intended Audience :: Developers",
+            "Intended Audience :: Science/Research",
+            "License :: OSI Approved :: MIT License",
+            "Programming Language :: Python",
             "Programming Language :: Python :: 3",
+            "Operating System :: MacOS",
+            "Operating System :: POSIX :: Linux",
+            "Topic :: Scientific/Engineering",
+            "Topic :: Security :: Cryptography",
+            "Topic :: Software Development :: Libraries :: Python Modules",
         ],
-        python_requires='>=3.5',
+        python_requires=">=3.5",
         cmdclass={
-            'build_py': PostBuildCommand,
+            "build_py": PostBuildCommand,
         },
-        install_requires=['numpy'],
+        install_requires=["numpy"],
         include_package_data=True,
     )
